@@ -1,6 +1,6 @@
 package ext
 
-import "winbeebot"
+import "github.com/selfmakeit/winbeebot"
 
 type Handler interface {
 	// CheckUpdate checks whether the update should handled by this handler.

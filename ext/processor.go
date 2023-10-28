@@ -1,7 +1,7 @@
 package ext
 
 import (
-	"winbeebot"
+	"github.com/selfmakeit/winbeebot"
 )
 
 // Processor is used to provide an entry point for wrapping internal Dispatcher logic, such that the basic logic can be
@@ -12,10 +12,11 @@ import (
 // }
 
 // var _ Processor = BaseProcessor{}
-//上面的这种方式更方便
+// 上面的这种方式更方便
 type Processor interface {
-	ProcessUpdate(d *Dispatcher, b *winbeebot.Bot, update  *winbeebot.Update) error
+	ProcessUpdate(d *Dispatcher, b *winbeebot.Bot, update *winbeebot.Update) error
 }
+
 // BaseProcessor is the simplest version of the Processor; it simply calls the dispatcher straight away.
 type BaseProcessor struct{}
 

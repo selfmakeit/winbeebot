@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"winbeebot"
+	"github.com/selfmakeit/winbeebot"
 )
 
 var (
@@ -110,8 +110,8 @@ type DispatcherOpts struct {
 }
 
 // NewDispatcher creates a new dispatcher, which process and handles incoming updates from the updates channel.
-//TODO 这里传入处理器 赋值给processor
-func NewDispatcher(processor Processor,opts *DispatcherOpts) *Dispatcher {
+// TODO 这里传入处理器 赋值给processor
+func NewDispatcher(processor Processor, opts *DispatcherOpts) *Dispatcher {
 	var errHandler DispatcherErrorHandler
 	var panicHandler DispatcherPanicHandler
 	var unhandledErrFunc ErrorFunc
@@ -245,7 +245,7 @@ func (d *Dispatcher) RemoveGroup(group int) bool {
 
 // processRawUpdate takes a JSON update to be unmarshalled and processed by Dispatcher.ProcessUpdate.
 func (d *Dispatcher) processRawUpdate(b *winbeebot.Bot, r json.RawMessage) error {
-	if b.Debug{
+	if b.Debug {
 		log.Println(string(r))
 	}
 	var upd winbeebot.Update
@@ -278,7 +278,7 @@ func (d *Dispatcher) ProcessUpdate(b *winbeebot.Bot, u *winbeebot.Update, data m
 	}()
 
 	// err = d.Processor.ProcessUpdate(d, b, ctx)
-	err = d.Processor.ProcessUpdate(d,b,u)
+	err = d.Processor.ProcessUpdate(d, b, u)
 	// We don't inline this, because we want to make sure that the defer function can override the error in the case of
 	// a panic.
 	return err

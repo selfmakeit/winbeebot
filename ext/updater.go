@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"winbeebot"
+	"github.com/selfmakeit/winbeebot"
 )
 
 var (
@@ -61,13 +61,13 @@ type UpdaterOpts struct {
 }
 
 // NewUpdater Creates a new Updater, as well as the necessary structures required for the associated Dispatcher.
-func NewUpdater(processor Processor,opts *UpdaterOpts) *Updater {
+func NewUpdater(processor Processor, opts *UpdaterOpts) *Updater {
 	var unhandledErrFunc ErrorFunc
 	var errLog *log.Logger
 
 	// Default dispatcher, no special settings.
 	// dispatcher := NewDispatcher(nil)
-	dispatcher := NewDispatcher(processor,nil)
+	dispatcher := NewDispatcher(processor, nil)
 
 	if opts != nil {
 		if opts.Dispatcher != nil {
@@ -287,7 +287,6 @@ func (u *Updater) StopAllBots() {
 	}
 }
 
-
 func (data botData) stop() {
 	// Close polling loops first, to ensure any updates currently being polled have the time to be sent to the
 	// updateChan.
@@ -406,9 +405,9 @@ func (u *Updater) StartServer(opts WebhookOpts) error {
 
 	return nil
 }
-func (u *Updater) GetBotInstance(token string)(*winbeebot.Bot, bool){
-	d,ok := u.botMapping.getBot(token)
-	if ok{
+func (u *Updater) GetBotInstance(token string) (*winbeebot.Bot, bool) {
+	d, ok := u.botMapping.getBot(token)
+	if ok {
 		return d.bot, ok
 	}
 	return nil, false
