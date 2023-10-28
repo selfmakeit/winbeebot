@@ -3,7 +3,7 @@ package ext
 import (
 	"strings"
 
-	"winbeebot"
+	"github.com/selfmakeit/winbeebot"
 )
 
 // TODO: extend to be used as a generic cancel context?

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"winbeebot"
+	"github.com/selfmakeit/winbeebot"
 )
 
 // botData Keeps track of the necessary update channels for each winbeebot.Bot.

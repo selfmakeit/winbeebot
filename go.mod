@@ -1,6 +1,6 @@
-module winbeebot
+module github.com/selfmakeit/winbeebot
 
-go 1.19
+go 1.21.3
 
 require go.uber.org/zap v1.26.0
 
