@@ -115,8 +115,21 @@ func (bot *Bot) Request(method string, params map[string]string, data map[string
 
 	return bot.BotClient.RequestWithContext(ctx, bot.Token, method, params, data, opts)
 }
-
-
+func (bot *Bot) UpdateExtraData(data *interface{}){
+	bot.ExtraData = data
+}
+func (bot *Bot) AddAdmin(id int64){
+	bot.Admins = append(bot.Admins, id)
+}
+func (bot *Bot) RemoveAdmin(adminId int64){
+	for idx,id := range bot.Admins{
+		if id == adminId{
+			bot.Admins = append(bot.Admins[:idx], bot.Admins[idx+1:]...)
+			break
+		}
+	}
+	
+}
 func hasFilesNeedingUpload(files []RequestFile) bool {
 	for _, file := range files {
 		if file.Data.NeedsUpload() {
