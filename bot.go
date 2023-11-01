@@ -47,7 +47,7 @@ type BotOpts struct {
 }
 
 // NewBot returns a new Bot struct populated with the necessary defaults.
-func NewBot(token string,adminsId []int64,log *zap.Logger, debug bool, extraData interface{},opts *BotOpts) (*Bot, error) {
+func NewBot(token string,adminsId []int64,log *zap.Logger, debug bool, extraData any,opts *BotOpts) (*Bot, error) {
 	botClient := BotClient(&BaseBotClient{
 		Client:             http.Client{},
 		UseTestEnvironment: false,
