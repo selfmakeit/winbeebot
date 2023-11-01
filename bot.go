@@ -115,7 +115,7 @@ func (bot *Bot) Request(method string, params map[string]string, data map[string
 
 	return bot.BotClient.RequestWithContext(ctx, bot.Token, method, params, data, opts)
 }
-func (bot *Bot) UpdateExtraData(data *interface{}){
+func (bot *Bot) UpdateExtraData(data any){
 	bot.ExtraData = data
 }
 func (bot *Bot) AddAdmin(id int64){
