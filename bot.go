@@ -27,8 +27,6 @@ type Bot struct {
 	User
 	// The bot client to use to make requests
 	BotClient
-	OwnerId int64
-	BotLevel int64 //机器人等级，用于克隆套餐分等级的情况
 	Admins []int64
 }
 
@@ -48,7 +46,7 @@ type BotOpts struct {
 }
 
 // NewBot returns a new Bot struct populated with the necessary defaults.
-func NewBot(token string,ownerId int64, level int64,adminsId []int64,log *zap.Logger, debug bool, opts *BotOpts) (*Bot, error) {
+func NewBot(token string,ownerId int64,adminsId []int64,log *zap.Logger, debug bool, opts *BotOpts) (*Bot, error) {
 	botClient := BotClient(&BaseBotClient{
 		Client:             http.Client{},
 		UseTestEnvironment: false,
@@ -76,9 +74,7 @@ func NewBot(token string,ownerId int64, level int64,adminsId []int64,log *zap.Lo
 	b := Bot{
 		Token:     token,
 		BotClient: botClient,
-		OwnerId: ownerId,
 		Admins: adminsId,
-		BotLevel: level,
 		Log: log,
 		Debug: debug,
 	}
