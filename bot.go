@@ -28,7 +28,7 @@ type Bot struct {
 	// The bot client to use to make requests
 	BotClient
 	Admins []int64
-	ExtraData *interface{}
+	ExtraData interface{}
 }
 
 // BotOpts declares all optional parameters for the NewBot function.
