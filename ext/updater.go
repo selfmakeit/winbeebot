@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -20,13 +19,16 @@ var (
 	ErrMissingCertOrKeyFile = errors.New("missing certfile or keyfile")
 	ErrExpectedEmptyServer  = errors.New("expected server to be nil")
 	ErrNotFound             = errors.New("not found")
+	ErrEmptyPath            = errors.New("empty path")
 )
 
 type ErrorFunc func(error)
 
 type Updater struct {
 	// Dispatcher is where all the incoming updates are sent to be processed.
-	Dispatcher *Dispatcher
+	// The Dispatcher runs in a separate goroutine, allowing for parallel update processing and dispatching.
+	// Once the Updater has received an update, it sends it to the Dispatcher over a JSON channel.
+	Dispatcher UpdateDispatcher
 
 	// UnhandledErrFunc provides more flexibility for dealing with previously unhandled errors, such as failures to get
 	// updates (when long-polling), or failures to unmarshal.
@@ -38,8 +40,6 @@ type Updater struct {
 
 	// stopIdling is the channel that blocks the main thread from exiting, to keep the bots running.
 	stopIdling chan struct{}
-	// serveMux is where all our webhook paths are added for the server to use.
-	serveMux *http.ServeMux
 	// webhookServer is the server in charge of receiving all incoming webhook updates.
 	webhookServer *http.Server
 
@@ -56,32 +56,26 @@ type UpdaterOpts struct {
 	// ErrorLog specifies an optional logger for unexpected behavior from handlers.
 	// If nil, logging is done via the log package's standard logger.
 	ErrorLog *log.Logger
-	// The dispatcher instance to be used by the updater.
-	Dispatcher *Dispatcher
 }
 
-// NewUpdater Creates a new Updater, as well as the necessary structures required for the associated Dispatcher.
-func NewUpdater(processor Processor, opts *UpdaterOpts) *Updater {
+// NewUpdater Creates a new Updater, as well as a Dispatcher and any optional updater configurations (via UpdaterOpts).
+func NewUpdater(dispatcher UpdateDispatcher, opts *UpdaterOpts) *Updater {
 	var unhandledErrFunc ErrorFunc
 	var errLog *log.Logger
 
-	// Default dispatcher, no special settings.
-	// dispatcher := NewDispatcher(nil)
-	dispatcher := NewDispatcher(processor, nil)
-
 	if opts != nil {
-		if opts.Dispatcher != nil {
-			dispatcher = opts.Dispatcher
-		}
-
 		unhandledErrFunc = opts.UnhandledErrFunc
 		errLog = opts.ErrorLog
 	}
 
 	return &Updater{
-		ErrorLog:         errLog,
-		UnhandledErrFunc: unhandledErrFunc,
 		Dispatcher:       dispatcher,
+		UnhandledErrFunc: unhandledErrFunc,
+		ErrorLog:         errLog,
+		botMapping: botMapping{
+			errFunc:  unhandledErrFunc,
+			errorLog: errLog,
+		},
 	}
 }
 
@@ -163,33 +157,25 @@ func (u *Updater) StartPolling(b *winbeebot.Bot, opts *PollingOpts) error {
 		}
 	}
 
-	updateChan := make(chan json.RawMessage)
-	pollChan := make(chan struct{})
-
-	err := u.botMapping.addBot(b, updateChan, pollChan, "")
+	bData, err := u.botMapping.addBot(b, "", "")
 	if err != nil {
 		return fmt.Errorf("failed to add bot with long polling: %w", err)
 	}
 
-	go u.Dispatcher.Start(b, updateChan)
-	go u.pollingLoop(b, reqOpts, pollChan, updateChan, v)
+	go u.Dispatcher.Start(b, bData.updateChan)
+	go u.pollingLoop(bData, reqOpts, v)
 
 	return nil
 }
 
-func (u *Updater) pollingLoop(b *winbeebot.Bot, opts *winbeebot.RequestOpts, stopPolling <-chan struct{}, updateChan chan<- json.RawMessage, v map[string]string) {
-	for {
-		select {
-		case <-stopPolling:
-			// if anything comes in, stop polling.
-			return
-		default:
-			// otherwise, continue as usual
-		}
+func (u *Updater) pollingLoop(bData *botData, opts *winbeebot.RequestOpts, v map[string]string) {
+	bData.updateWriterControl.Add(1)
+	defer bData.updateWriterControl.Done()
 
+	for {
 		// Manually craft the getUpdate calls to improve memory management, reduce json parsing overheads, and
 		// unnecessary reallocation of url.Values in the polling loop.
-		r, err := b.Request("getUpdates", v, nil, opts)
+		r, err := bData.bot.Request("getUpdates", v, nil, opts)
 		if err != nil {
 			if u.UnhandledErrFunc != nil {
 				u.UnhandledErrFunc(err)
@@ -232,9 +218,14 @@ func (u *Updater) pollingLoop(b *winbeebot.Bot, opts *winbeebot.RequestOpts, sto
 		}
 
 		v["offset"] = strconv.FormatInt(lastUpdate.UpdateId+1, 10)
+
+		if bData.isUpdateChannelStopped() {
+			return
+		}
+
 		for _, updData := range rawUpdates {
 			temp := updData // use new mem address to avoid loop conflicts
-			updateChan <- temp
+			bData.updateChan <- temp
 		}
 	}
 }
@@ -287,25 +278,10 @@ func (u *Updater) StopAllBots() {
 	}
 }
 
-func (data botData) stop() {
-	// Close polling loops first, to ensure any updates currently being polled have the time to be sent to the
-	// updateChan.
-	if data.polling != nil {
-		close(data.polling)
-	}
-
-	// Then, close the updates channel.
-	close(data.updateChan)
-}
-
 // StartWebhook starts the webhook server for a single bot instance.
 // This does NOT set the webhook on telegram - this should be done by the caller.
 // The opts parameter allows for specifying various webhook settings.
 func (u *Updater) StartWebhook(b *winbeebot.Bot, urlPath string, opts WebhookOpts) error {
-	if u.webhookServer != nil {
-		return ErrExpectedEmptyServer
-	}
-
 	err := u.AddWebhook(b, urlPath, opts)
 	if err != nil {
 		return fmt.Errorf("failed to add webhook: %w", err)
@@ -316,37 +292,19 @@ func (u *Updater) StartWebhook(b *winbeebot.Bot, urlPath string, opts WebhookOpt
 
 // AddWebhook prepares the webhook server to receive webhook updates for one bot, on a specific path.
 func (u *Updater) AddWebhook(b *winbeebot.Bot, urlPath string, opts WebhookOpts) error {
-	if u.serveMux == nil {
-		u.serveMux = http.NewServeMux()
+	// We expect webhooks to use unique URL paths; otherwise, we wouldnt be able to differentiate them from polling, or
+	// from each other.
+	if urlPath == "" {
+		return fmt.Errorf("expected a non-empty url path: %w", ErrEmptyPath)
 	}
 
-	updateChan := make(chan json.RawMessage)
-	u.serveMux.HandleFunc("/"+urlPath, func(w http.ResponseWriter, r *http.Request) {
-		if opts.SecretToken != "" && opts.SecretToken != r.Header.Get("X-Telegram-Bot-Api-Secret-Token") {
-			// Drop any updates from invalid secret tokens.
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		bytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			if u.UnhandledErrFunc != nil {
-				u.UnhandledErrFunc(err)
-			} else {
-				u.logf("Failed to read incoming webhook contents: %s", err.Error())
-			}
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		updateChan <- bytes
-	})
-
-	err := u.botMapping.addBot(b, updateChan, nil, urlPath)
+	bData, err := u.botMapping.addBot(b, strings.TrimPrefix(urlPath, "/"), opts.SecretToken)
 	if err != nil {
 		return fmt.Errorf("failed to add webhook for bot: %w", err)
 	}
 
 	// Webhook has been added; relevant dispatcher should also be started.
-	go u.Dispatcher.Start(b, updateChan)
+	go u.Dispatcher.Start(b, bData.updateChan)
 	return nil
 }
 
@@ -363,14 +321,16 @@ func (u *Updater) SetAllBotWebhooks(domain string, opts *winbeebot.SetWebhookOpt
 	return nil
 }
 
+// GetHandlerFunc returns the http.HandlerFunc responsible for processing incoming webhook updates.
+// It is provided to allow for an alternative to the StartServer method using a user-defined http server.
+func (u *Updater) GetHandlerFunc(pathPrefix string) http.HandlerFunc {
+	return u.botMapping.getHandlerFunc(pathPrefix)
+}
+
 // StartServer starts the webhook server for all the bots added via AddWebhook.
 // It is recommended to call this BEFORE calling setWebhooks.
 // The opts parameter allows for specifying TLS settings.
 func (u *Updater) StartServer(opts WebhookOpts) error {
-	if u.serveMux == nil {
-		u.serveMux = http.NewServeMux()
-	}
-
 	var tls bool
 	switch {
 	case opts.CertFile == "" && opts.KeyFile == "":
@@ -386,8 +346,12 @@ func (u *Updater) StartServer(opts WebhookOpts) error {
 		return fmt.Errorf("failed to listen on %s:%s: %w", opts.ListenNet, opts.ListenAddr, err)
 	}
 
+	if u.webhookServer != nil {
+		return ErrExpectedEmptyServer
+	}
+
 	u.webhookServer = &http.Server{
-		Handler:           u.serveMux,
+		Handler:           u.GetHandlerFunc("/"),
 		ReadTimeout:       opts.ReadTimeout,
 		ReadHeaderTimeout: opts.ReadHeaderTimeout,
 	}
@@ -405,6 +369,7 @@ func (u *Updater) StartServer(opts WebhookOpts) error {
 
 	return nil
 }
+
 func (u *Updater) GetBotInstance(token string) (*winbeebot.Bot, bool) {
 	d, ok := u.botMapping.getBot(token)
 	if ok {
