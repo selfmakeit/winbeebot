@@ -41,10 +41,15 @@ const (
 	DispatcherActionEndGroups DispatcherAction = "end-groups"
 )
 
-var (
-	EndGroups      = errors.New("group iteration ended")
-	ContinueGroups = errors.New("group iteration continued")
-)
+var EndGroups      = errors.New("group iteration ended")
+var ContinueGroups = errors.New("group iteration continued")
+
+// The UpdateDispatcher interface is used to abstract away common Dispatcher implementations.
+// It assumes that all incoming updates come through a JSON channel.
+type UpdateDispatcher interface {
+	Start(b *winbeebot.Bot, updates <-chan json.RawMessage)
+	Stop()
+}
 
 type Dispatcher struct {
 	// Processor defines how to process the raw updates being processed by the Dispatcher.
@@ -79,7 +84,8 @@ type Dispatcher struct {
 	// waitGroup handles the number of running operations to allow for clean shutdowns.
 	waitGroup sync.WaitGroup
 }
-
+// Ensure compile-time type safety.
+var _ UpdateDispatcher = &Dispatcher{}
 // DispatcherOpts can be used to configure or override default Dispatcher behaviours.
 type DispatcherOpts struct {
 	// Processor allows for providing custom Processor interfaces with different behaviours.
@@ -176,7 +182,7 @@ func (d *Dispatcher) MaxUsage() int {
 
 // Start to handle incoming updates.
 // This is a blocking method; it should be called as a goroutine, such that it can receive incoming updates.
-func (d *Dispatcher) Start(b *winbeebot.Bot, updates chan json.RawMessage) {
+func (d *Dispatcher) Start(b *winbeebot.Bot,  updates <-chan json.RawMessage) {
 	// Listen to updates as they come in from the updater.
 	for upd := range updates {
 		d.waitGroup.Add(1)
