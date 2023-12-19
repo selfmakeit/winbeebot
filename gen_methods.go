@@ -5593,6 +5593,8 @@ func (u Update)FromChat() *Chat {
 		return &u.EditedChannelPost.Chat
 	case u.CallbackQuery != nil:
 		return &u.CallbackQuery.Message.Chat
+	case u.ChatMember != nil:
+		return &u.ChatMember.Chat
 	default:
 		return nil
 	}
