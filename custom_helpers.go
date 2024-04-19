@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"encoding/json"
 )
 
 // GetLink is a helper method to easily get the message link (It will return an empty string in case of private or group chat type).
@@ -50,4 +51,56 @@ func (c Chat) Promote(b *Bot, userId int64, opts *PromoteChatMemberOpts) (bool, 
 // URL gets the URL the file can be downloaded from.
 func (f File) URL(b *Bot, opts *RequestOpts) string {
 	return b.FileURL(b.Token, f.FilePath, opts)
+}
+
+// unmarshalMaybeInaccessibleMessage is a JSON unmarshal helper to marshal the right structs into a
+// MaybeInaccessibleMessage interface based on the Date field.
+// This method is manually maintained due to special-case handling on the Date field rather than a specific type field.
+func unmarshalMaybeInaccessibleMessage(d json.RawMessage) (MaybeInaccessibleMessage, error) {
+	if len(d) == 0 {
+		return nil, nil
+	}
+
+	t := struct {
+		Date int64
+	}{}
+	err := json.Unmarshal(d, &t)
+	if err != nil {
+		return nil, err
+	}
+
+	// As per the docs, date is always 0 for inaccessible messages:
+	// https://core.telegram.org/bots/api#inaccessiblemessage
+	if t.Date == 0 {
+		s := InaccessibleMessage{}
+		err := json.Unmarshal(d, &s)
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
+	}
+
+	s := Message{}
+	err = json.Unmarshal(d, &s)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+// ToMessage is a helper function to simplify dealing with telegram's message nonsense.
+// It populates a standard message object with all of InaccessibleMessage's shared fields.
+func (im InaccessibleMessage) ToMessage() *Message {
+	return &Message{
+		MessageId: im.MessageId,
+		Date:      im.Date,
+		Chat:      im.Chat,
+	}
+}
+// GetText returns the message text, for both text messages and media messages. (Why is this not the telegram default!)
+func (m Message) GetText() string {
+	if m.Caption != "" {
+		return m.Caption
+	}
+	return m.Text
 }
