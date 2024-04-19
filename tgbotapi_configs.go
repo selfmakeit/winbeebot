@@ -295,7 +295,7 @@ func (config MessageConfig) params() (Params, error) {
 	params.AddBool("disable_web_page_preview", config.DisableWebPagePreview)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	err = params.AddInterface("entities", config.Entities)
-
+	params.AddNonEmpty("business_connection_id", chat.BusinessConnectionId)
 	return params, err
 }
 
