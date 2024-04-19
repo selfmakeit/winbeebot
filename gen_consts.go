@@ -5,52 +5,103 @@ package winbeebot
 
 // The consts listed below represent all the update types that can be requested from telegram.
 const (
-	// UpdateTypeMessage is new incoming message of any kind — text, photo, sticker, etc.
-	UpdateTypeMessage = "message"
-
-	// UpdateTypeEditedMessage is new version of a message that is known to the bot and was edited
-	UpdateTypeEditedMessage = "edited_message"
-
-	// UpdateTypeChannelPost is new incoming channel post of any kind — text, photo, sticker, etc.
-	UpdateTypeChannelPost = "channel_post"
-
-	// UpdateTypeEditedChannelPost is new version of a channel post that is known to the bot and was edited
-	UpdateTypeEditedChannelPost = "edited_channel_post"
-
-	// UpdateTypeInlineQuery is new incoming inline query
-	UpdateTypeInlineQuery = "inline_query"
-
-	// UpdateTypeChosenInlineResult i the result of an inline query that was chosen by a user and sent to their
-	// chat partner. Please see the documentation on the feedback collecting for
-	// details on how to enable these updates for your bot.
-	UpdateTypeChosenInlineResult = "chosen_inline_result"
-
-	// UpdateTypeCallbackQuery is new incoming callback query
-	UpdateTypeCallbackQuery = "callback_query"
-
-	// UpdateTypeShippingQuery is new incoming shipping query. Only for invoices with flexible price
-	UpdateTypeShippingQuery = "shipping_query"
-
-	// UpdateTypePreCheckoutQuery is new incoming pre-checkout query. Contains full information about checkout
-	UpdateTypePreCheckoutQuery = "pre_checkout_query"
-
-	// UpdateTypePoll is new poll state. Bots receive only updates about stopped polls and polls
-	// which are sent by the bot
-	UpdateTypePoll = "poll"
-
-	// UpdateTypePollAnswer is when user changed their answer in a non-anonymous poll. Bots receive new votes
-	// only in polls that were sent by the bot itself.
-	UpdateTypePollAnswer = "poll_answer"
-
-	// UpdateTypeMyChatMember is when the bot's chat member status was updated in a chat. For private chats, this
-	// update is received only when the bot is blocked or unblocked by the user.
-	UpdateTypeMyChatMember = "my_chat_member"
-
-	// UpdateTypeChatMember is when the bot must be an administrator in the chat and must explicitly specify
-	// this update in the list of allowed_updates to receive these updates.
-	UpdateTypeChatMember = "chat_member"
-	UpdateTypeChatJoinRequest    = "chat_join_request"
+	UpdateTypeMessage                 = "message"
+	UpdateTypeEditedMessage           = "edited_message"
+	UpdateTypeChannelPost             = "channel_post"
+	UpdateTypeEditedChannelPost       = "edited_channel_post"
+	UpdateTypeBusinessConnection      = "business_connection"
+	UpdateTypeBusinessMessage         = "business_message"
+	UpdateTypeEditedBusinessMessage   = "edited_business_message"
+	UpdateTypeDeletedBusinessMessages = "deleted_business_messages"
+	UpdateTypeMessageReaction         = "message_reaction"
+	UpdateTypeMessageReactionCount    = "message_reaction_count"
+	UpdateTypeInlineQuery             = "inline_query"
+	UpdateTypeChosenInlineResult      = "chosen_inline_result"
+	UpdateTypeCallbackQuery           = "callback_query"
+	UpdateTypeShippingQuery           = "shipping_query"
+	UpdateTypePreCheckoutQuery        = "pre_checkout_query"
+	UpdateTypePoll                    = "poll"
+	UpdateTypePollAnswer              = "poll_answer"
+	UpdateTypeMyChatMember            = "my_chat_member"
+	UpdateTypeChatMember              = "chat_member"
+	UpdateTypeChatJoinRequest         = "chat_join_request"
+	UpdateTypeChatBoost               = "chat_boost"
+	UpdateTypeRemovedChatBoost        = "removed_chat_boost"
 )
+
+// GetType is a helper method to easily identify the type of update that is being received.
+func (u Update) GetType() string {
+	switch {
+	case u.Message != nil:
+		return UpdateTypeMessage
+
+	case u.EditedMessage != nil:
+		return UpdateTypeEditedMessage
+
+	case u.ChannelPost != nil:
+		return UpdateTypeChannelPost
+
+	case u.EditedChannelPost != nil:
+		return UpdateTypeEditedChannelPost
+
+	case u.BusinessConnection != nil:
+		return UpdateTypeBusinessConnection
+
+	case u.BusinessMessage != nil:
+		return UpdateTypeBusinessMessage
+
+	case u.EditedBusinessMessage != nil:
+		return UpdateTypeEditedBusinessMessage
+
+	case u.DeletedBusinessMessages != nil:
+		return UpdateTypeDeletedBusinessMessages
+
+	case u.MessageReaction != nil:
+		return UpdateTypeMessageReaction
+
+	case u.MessageReactionCount != nil:
+		return UpdateTypeMessageReactionCount
+
+	case u.InlineQuery != nil:
+		return UpdateTypeInlineQuery
+
+	case u.ChosenInlineResult != nil:
+		return UpdateTypeChosenInlineResult
+
+	case u.CallbackQuery != nil:
+		return UpdateTypeCallbackQuery
+
+	case u.ShippingQuery != nil:
+		return UpdateTypeShippingQuery
+
+	case u.PreCheckoutQuery != nil:
+		return UpdateTypePreCheckoutQuery
+
+	case u.Poll != nil:
+		return UpdateTypePoll
+
+	case u.PollAnswer != nil:
+		return UpdateTypePollAnswer
+
+	case u.MyChatMember != nil:
+		return UpdateTypeMyChatMember
+
+	case u.ChatMember != nil:
+		return UpdateTypeChatMember
+
+	case u.ChatJoinRequest != nil:
+		return UpdateTypeChatJoinRequest
+
+	case u.ChatBoost != nil:
+		return UpdateTypeChatBoost
+
+	case u.RemovedChatBoost != nil:
+		return UpdateTypeRemovedChatBoost
+
+	default:
+		return "unknown"
+	}
+}
 
 // The consts listed below represent all the parse_mode options that can be sent to telegram.
 const (
