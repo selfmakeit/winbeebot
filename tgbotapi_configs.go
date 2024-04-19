@@ -223,6 +223,8 @@ type BaseChat struct {
 	ReplyMarkup              interface{}
 	DisableNotification      bool
 	AllowSendingWithoutReply bool
+	// Unique identifier of the business connection on behalf of which the message will be sent
+	BusinessConnectionId string
 }
 
 func (chat *BaseChat) params() (Params, error) {
