@@ -5592,7 +5592,8 @@ func (u Update)FromChat() *Chat {
 	case u.EditedChannelPost != nil:
 		return &u.EditedChannelPost.Chat
 	case u.CallbackQuery != nil:
-		return &u.CallbackQuery.Message.Chat
+		c := u.CallbackQuery.Message.GetChat()
+		return &c
 	case u.ChatMember != nil:
 		return &u.ChatMember.Chat
 	default:
@@ -5623,4 +5624,76 @@ func (c Chat) IsChannel() bool {
 // ChatConfig returns a ChatConfig struct for chat related methods.
 func (c Chat) ChatConfig() ChatConfig {
 	return ChatConfig{ChatID: c.Id}
+}
+// SetMessageReactionOpts is the set of optional fields for Bot.SetMessageReaction.
+type SetMessageReactionOpts struct {
+	// A JSON-serialized list of reaction types to set on the message. Currently, as non-premium users, bots can set up to one reaction per message. A custom emoji reaction can be used if it is either already present on the message or explicitly allowed by chat administrators.
+	Reaction []ReactionType
+	// Pass True to set the reaction with a big animation
+	IsBig bool
+	// RequestOpts are an additional optional field to configure timeouts for individual requests
+	RequestOpts *RequestOpts
+}
+
+// SetMessageReaction (https://core.telegram.org/bots/api#setmessagereaction)
+//
+// Use this method to change the chosen reactions on a message. Service messages can't be reacted to. Automatically forwarded messages from a channel to its discussion group have the same available reactions as messages in the channel. Returns True on success.
+//   - chatId (type int64): Unique identifier for the target chat or username of the target channel (in the format @channelusername)
+//   - messageId (type int64): Identifier of the target message. If the message belongs to a media group, the reaction is set to the first non-deleted message in the group instead.
+//   - opts (type SetMessageReactionOpts): All optional parameters.
+func (bot *Bot) SetMessageReaction(chatId int64, messageId int64, opts *SetMessageReactionOpts) (bool, error) {
+	v := map[string]string{}
+	v["chat_id"] = strconv.FormatInt(chatId, 10)
+	v["message_id"] = strconv.FormatInt(messageId, 10)
+	if opts != nil {
+		if opts.Reaction != nil {
+			bs, err := json.Marshal(opts.Reaction)
+			if err != nil {
+				return false, fmt.Errorf("failed to marshal field reaction: %w", err)
+			}
+			v["reaction"] = string(bs)
+		}
+		v["is_big"] = strconv.FormatBool(opts.IsBig)
+	}
+
+	var reqOpts *RequestOpts
+	if opts != nil {
+		reqOpts = opts.RequestOpts
+	}
+
+	r, err := bot.Request("setMessageReaction", v, nil, reqOpts)
+	if err != nil {
+		return false, err
+	}
+
+	var b bool
+	return b, json.Unmarshal(r, &b)
+}
+// GetBusinessConnectionOpts is the set of optional fields for Bot.GetBusinessConnection.
+type GetBusinessConnectionOpts struct {
+	// RequestOpts are an additional optional field to configure timeouts for individual requests
+	RequestOpts *RequestOpts
+}
+
+// GetBusinessConnection (https://core.telegram.org/bots/api#getbusinessconnection)
+//
+// Use this method to get information about the connection of the bot with a business account. Returns a BusinessConnection object on success.
+//   - businessConnectionId (type string): Unique identifier of the business connection
+//   - opts (type GetBusinessConnectionOpts): All optional parameters.
+func (bot *Bot) GetBusinessConnection(businessConnectionId string, opts *GetBusinessConnectionOpts) (*BusinessConnection, error) {
+	v := map[string]string{}
+	v["business_connection_id"] = businessConnectionId
+
+	var reqOpts *RequestOpts
+	if opts != nil {
+		reqOpts = opts.RequestOpts
+	}
+
+	r, err := bot.Request("getBusinessConnection", v, nil, reqOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var b BusinessConnection
+	return &b, json.Unmarshal(r, &b)
 }
