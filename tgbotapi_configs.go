@@ -255,6 +255,8 @@ type BaseEdit struct {
 	MessageID       int
 	InlineMessageID string
 	ReplyMarkup     *InlineKeyboardMarkupTgbotapi
+	// Unique identifier of the business connection on behalf of which the message will be sent
+	BusinessConnectionId string
 }
 
 func (edit BaseEdit) params() (Params, error) {
