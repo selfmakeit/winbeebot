@@ -2597,6 +2597,7 @@ func (bot *Bot) RevokeChatInviteLink(chatId int64, inviteLink string, opts *Revo
 // SendAnimationOpts is the set of optional fields for Bot.SendAnimation.
 type SendAnimationOpts struct {
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
+	BusinessConnectionId string
 	MessageThreadId int64
 	// Duration of sent animation in seconds
 	Duration int64
@@ -2660,6 +2661,7 @@ func (bot *Bot) SendAnimation(chatId int64, animation InputFile, opts *SendAnima
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -2736,6 +2738,8 @@ func (bot *Bot) SendAnimation(chatId int64, animation InputFile, opts *SendAnima
 type SendAudioOpts struct {
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
+	// Unique identifier of the business connection on behalf of which the message will be sent
+	BusinessConnectionId string
 	// Audio caption, 0-1024 characters after entities parsing
 	Caption string
 	// Mode for parsing entities in the audio caption. See formatting options for more details.
@@ -2797,6 +2801,7 @@ func (bot *Bot) SendAudio(chatId int64, audio InputFile, opts *SendAudioOpts) (*
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -2868,6 +2873,8 @@ func (bot *Bot) SendAudio(chatId int64, audio InputFile, opts *SendAudioOpts) (*
 type SendChatActionOpts struct {
 	// Unique identifier for the target message thread; supergroups only
 	MessageThreadId int64
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// RequestOpts are an additional optional field to configure timeouts for individual requests
 	RequestOpts *RequestOpts
 }
@@ -2884,6 +2891,7 @@ func (bot *Bot) SendChatAction(chatId int64, action string, opts *SendChatAction
 	v["chat_id"] = strconv.FormatInt(chatId, 10)
 	v["action"] = action
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId       
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -2905,6 +2913,8 @@ func (bot *Bot) SendChatAction(chatId int64, action string, opts *SendChatAction
 
 // SendContactOpts is the set of optional fields for Bot.SendContact.
 type SendContactOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Contact's last name
@@ -2938,6 +2948,7 @@ func (bot *Bot) SendContact(chatId int64, phoneNumber string, firstName string, 
 	v["phone_number"] = phoneNumber
 	v["first_name"] = firstName
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -2974,6 +2985,8 @@ func (bot *Bot) SendContact(chatId int64, phoneNumber string, firstName string, 
 
 // SendDiceOpts is the set of optional fields for Bot.SendDice.
 type SendDiceOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Emoji on which the dice throw animation is based. Currently, must be one of "🎲", "🎯", "🏀", "⚽", "🎳", or "🎰". Dice can have values 1-6 for "🎲", "🎯" and "🎳", values 1-5 for "🏀" and "⚽", and values 1-64 for "🎰". Defaults to "🎲"
@@ -3001,6 +3014,7 @@ func (bot *Bot) SendDice(chatId int64, opts *SendDiceOpts) (*Message, error) {
 	v := map[string]string{}
 	v["chat_id"] = strconv.FormatInt(chatId, 10)
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3036,6 +3050,8 @@ func (bot *Bot) SendDice(chatId int64, opts *SendDiceOpts) (*Message, error) {
 
 // SendDocumentOpts is the set of optional fields for Bot.SendDocument.
 type SendDocumentOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files: https://core.telegram.org/bots/api#sending-files
@@ -3094,6 +3110,7 @@ func (bot *Bot) SendDocument(chatId int64, document InputFile, opts *SendDocumen
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3159,6 +3176,8 @@ func (bot *Bot) SendDocument(chatId int64, document InputFile, opts *SendDocumen
 
 // SendGameOpts is the set of optional fields for Bot.SendGame.
 type SendGameOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Sends the message silently. Users will receive a notification with no sound.
@@ -3186,6 +3205,7 @@ func (bot *Bot) SendGame(chatId int64, gameShortName string, opts *SendGameOpts)
 	v["chat_id"] = strconv.FormatInt(chatId, 10)
 	v["game_short_name"] = gameShortName
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3218,6 +3238,8 @@ func (bot *Bot) SendGame(chatId int64, gameShortName string, opts *SendGameOpts)
 
 // SendInvoiceOpts is the set of optional fields for Bot.SendInvoice.
 type SendInvoiceOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// The maximum accepted amount for tips in the smallest units of the currency (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). Defaults to 0
@@ -3291,6 +3313,7 @@ func (bot *Bot) SendInvoice(chatId int64, title string, description string, payl
 		v["prices"] = string(bs)
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3352,6 +3375,8 @@ func (bot *Bot) SendInvoice(chatId int64, title string, description string, payl
 
 // SendLocationOpts is the set of optional fields for Bot.SendLocation.
 type SendLocationOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// The radius of uncertainty for the location, measured in meters; 0-1500
@@ -3389,6 +3414,7 @@ func (bot *Bot) SendLocation(chatId int64, latitude float64, longitude float64, 
 	v["latitude"] = strconv.FormatFloat(latitude, 'f', -1, 64)
 	v["longitude"] = strconv.FormatFloat(longitude, 'f', -1, 64)
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3435,6 +3461,8 @@ func (bot *Bot) SendLocation(chatId int64, latitude float64, longitude float64, 
 
 // SendMediaGroupOpts is the set of optional fields for Bot.SendMediaGroup.
 type SendMediaGroupOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Sends messages silently. Users will receive a notification with no sound.
@@ -3475,6 +3503,7 @@ func (bot *Bot) SendMediaGroup(chatId int64, media []InputMedia, opts *SendMedia
 		v["media"] = string(bs)
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3501,7 +3530,8 @@ func (bot *Bot) SendMediaGroup(chatId int64, media []InputMedia, opts *SendMedia
 }
 
 // SendMessageOpts is the set of optional fields for Bot.SendMessage.
-type SendMessageOpts struct {
+type SendMessageOpts struct {// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Mode for parsing entities in the message text. See formatting options for more details.
@@ -3535,6 +3565,7 @@ func (bot *Bot) SendMessage(chatId int64, text string, opts *SendMessageOpts) (*
 	v["chat_id"] = strconv.FormatInt(chatId, 10)
 	v["text"] = text
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3578,6 +3609,8 @@ func (bot *Bot) SendMessage(chatId int64, text string, opts *SendMessageOpts) (*
 
 // SendPhotoOpts is the set of optional fields for Bot.SendPhoto.
 type SendPhotoOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Photo caption (may also be used when resending photos by file_id), 0-1024 characters after entities parsing
@@ -3634,6 +3667,7 @@ func (bot *Bot) SendPhoto(chatId int64, photo InputFile, opts *SendPhotoOpts) (*
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3678,6 +3712,8 @@ func (bot *Bot) SendPhoto(chatId int64, photo InputFile, opts *SendPhotoOpts) (*
 
 // SendPollOpts is the set of optional fields for Bot.SendPoll.
 type SendPollOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// True, if the poll needs to be anonymous, defaults to True
@@ -3733,6 +3769,7 @@ func (bot *Bot) SendPoll(chatId int64, question string, options []string, opts *
 		v["options"] = string(bs)
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3790,6 +3827,8 @@ func (bot *Bot) SendPoll(chatId int64, question string, options []string, opts *
 
 // SendStickerOpts is the set of optional fields for Bot.SendSticker.
 type SendStickerOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Emoji associated with the sticker; only for just uploaded stickers
@@ -3840,6 +3879,7 @@ func (bot *Bot) SendSticker(chatId int64, sticker InputFile, opts *SendStickerOp
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3875,6 +3915,8 @@ func (bot *Bot) SendSticker(chatId int64, sticker InputFile, opts *SendStickerOp
 
 // SendVenueOpts is the set of optional fields for Bot.SendVenue.
 type SendVenueOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Foursquare identifier of the venue
@@ -3916,6 +3958,7 @@ func (bot *Bot) SendVenue(chatId int64, latitude float64, longitude float64, tit
 	v["title"] = title
 	v["address"] = address
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -3954,6 +3997,8 @@ func (bot *Bot) SendVenue(chatId int64, latitude float64, longitude float64, tit
 
 // SendVideoOpts is the set of optional fields for Bot.SendVideo.
 type SendVideoOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Duration of sent video in seconds
@@ -4020,6 +4065,7 @@ func (bot *Bot) SendVideo(chatId int64, video InputFile, opts *SendVideoOpts) (*
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -4095,6 +4141,8 @@ func (bot *Bot) SendVideo(chatId int64, video InputFile, opts *SendVideoOpts) (*
 
 // SendVideoNoteOpts is the set of optional fields for Bot.SendVideoNote.
 type SendVideoNoteOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Duration of sent video in seconds
@@ -4149,6 +4197,7 @@ func (bot *Bot) SendVideoNote(chatId int64, videoNote InputFile, opts *SendVideo
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
@@ -4210,6 +4259,8 @@ func (bot *Bot) SendVideoNote(chatId int64, videoNote InputFile, opts *SendVideo
 
 // SendVoiceOpts is the set of optional fields for Bot.SendVoice.
 type SendVoiceOpts struct {
+	// Unique identifier of the business connection on behalf of which the action will be sent
+	BusinessConnectionId string
 	// Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
 	MessageThreadId int64
 	// Voice message caption, 0-1024 characters after entities parsing
@@ -4266,6 +4317,7 @@ func (bot *Bot) SendVoice(chatId int64, voice InputFile, opts *SendVoiceOpts) (*
 		}
 	}
 	if opts != nil {
+		v["business_connection_id"] = opts.BusinessConnectionId 
 		if opts.MessageThreadId != 0 {
 			v["message_thread_id"] = strconv.FormatInt(opts.MessageThreadId, 10)
 		}
