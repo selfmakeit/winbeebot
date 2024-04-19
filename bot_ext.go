@@ -327,7 +327,8 @@ func (b *Bot)GetChatIdFromUpdate(update Update) int64 {
 		return update.Message.Chat.Id
 	}
 	if update.CallbackQuery != nil {
-		return update.CallbackQuery.Message.Chat.Id
+		c := update.CallbackQuery.Message.GetChat()
+		return c.Id
 	}
 	if update.InlineQuery != nil {
 		return update.InlineQuery.From.Id
@@ -348,7 +349,8 @@ func GetGroupIdFromUpdate(update Update) int64 {
 		return update.Message.Chat.Id
 	}
 	if update.CallbackQuery != nil {
-		return update.CallbackQuery.Message.Chat.Id
+		c := update.CallbackQuery.Message.GetChat()
+		return c.Id
 	}
 	if update.InlineQuery != nil {
 		return update.InlineQuery.From.Id
