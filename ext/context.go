@@ -61,27 +61,67 @@ func NewContext(update *winbeebot.Update, data map[string]interface{}) *Context 
 		msg = update.EditedChannelPost
 		chat = &update.EditedChannelPost.Chat
 
+	case update.BusinessConnection != nil:
+		user = &update.BusinessConnection.User
+
+	case update.BusinessMessage != nil:
+		msg = update.BusinessMessage
+		chat = &update.BusinessMessage.Chat
+		user = update.BusinessMessage.From
+
+	case update.EditedBusinessMessage != nil:
+		msg = update.EditedBusinessMessage
+		chat = &update.EditedBusinessMessage.Chat
+		user = update.EditedBusinessMessage.From
+
+	case update.DeletedBusinessMessages != nil:
+		chat = &update.DeletedBusinessMessages.Chat
+
+	case update.MessageReaction != nil:
+		user = update.MessageReaction.User
+		chat = &update.MessageReaction.Chat
+		sender = update.MessageReaction.GetSender()
+
+	case update.MessageReactionCount != nil:
+		chat = &update.MessageReactionCount.Chat
+
 	case update.InlineQuery != nil:
 		user = &update.InlineQuery.From
+
+	case update.ChosenInlineResult != nil:
+		user = &update.ChosenInlineResult.From
 
 	case update.CallbackQuery != nil:
 		user = &update.CallbackQuery.From
 
 		if update.CallbackQuery.Message != nil {
-			msg = update.CallbackQuery.Message
-			chat = &update.CallbackQuery.Message.Chat
+			switch m := update.CallbackQuery.Message.(type) {
+			case winbeebot.Message:
+				msg = &m
+			case winbeebot.InaccessibleMessage:
+				// Note: This conversion means that EffectiveMessage may not contain all Message fields
+				msg = m.ToMessage()
+			}
+
+			tmpC := update.CallbackQuery.Message.GetChat()
+			chat = &tmpC
+
 			// Note: the sender is the sender of the CallbackQuery; not the sender of the CallbackQuery.Message.
 			sender = &winbeebot.Sender{User: user, ChatId: chat.Id}
 		}
-
-	case update.ChosenInlineResult != nil:
-		user = &update.ChosenInlineResult.From
 
 	case update.ShippingQuery != nil:
 		user = &update.ShippingQuery.From
 
 	case update.PreCheckoutQuery != nil:
 		user = &update.PreCheckoutQuery.From
+
+	case update.Poll != nil:
+		// no data
+
+	case update.PollAnswer != nil:
+		user = update.PollAnswer.User
+		sender = update.PollAnswer.GetSender()
 
 	case update.MyChatMember != nil:
 		user = &update.MyChatMember.From
@@ -94,6 +134,14 @@ func NewContext(update *winbeebot.Update, data map[string]interface{}) *Context 
 	case update.ChatJoinRequest != nil:
 		user = &update.ChatJoinRequest.From
 		chat = &update.ChatJoinRequest.Chat
+
+	case update.ChatBoost != nil:
+		chat = &update.ChatBoost.Chat
+		user = update.ChatBoost.Boost.Source.MergeChatBoostSource().User
+
+	case update.RemovedChatBoost != nil:
+		chat = &update.RemovedChatBoost.Chat
+		user = update.RemovedChatBoost.Source.MergeChatBoostSource().User
 	}
 
 	if data == nil {
@@ -123,34 +171,9 @@ func NewContext(update *winbeebot.Update, data map[string]interface{}) *Context 
 
 // Args gets the list of whitespace-separated arguments of the message text.
 func (c *Context) Args() []string {
-	var msg *winbeebot.Message
-
-	switch {
-	case c.Update.Message != nil:
-		msg = c.Update.Message
-
-	case c.Update.EditedMessage != nil:
-		msg = c.Update.EditedMessage
-
-	case c.Update.ChannelPost != nil:
-		msg = c.Update.ChannelPost
-
-	case c.Update.EditedChannelPost != nil:
-		msg = c.Update.EditedChannelPost
-
-	case c.Update.CallbackQuery != nil && c.Update.CallbackQuery.Message != nil:
-		msg = c.Update.CallbackQuery.Message
-	}
-
-	if msg == nil {
+	if c.EffectiveMessage == nil {
 		return nil
 	}
 
-	if msg.Text != "" {
-		return strings.Fields(msg.Text)
-	} else if msg.Caption != "" {
-		return strings.Fields(msg.Caption)
-	}
-
-	return nil
+	return strings.Fields(c.EffectiveMessage.GetText())
 }
