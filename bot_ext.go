@@ -136,13 +136,14 @@ func (b *Bot) CheckIsMember(groupId, userid int64) bool {
 		}
 	resp, err := b.RequestTgbotapi(c)
 	if err != nil {
+		b.Log.Sugar().Error("检查用户是否为群成员出错", err)
 		return false
 	}
 
 	var m ChatMemberTgbotapi
 	err = json.Unmarshal(resp.Result, &m)
 
-	if err == nil && (m.Status == "creator" || m.Status == "administrator" || m.Status == "member") {
+	if err == nil && (m.Status == "creator" || m.Status == "administrator" || m.Status == "member" || m.IsMember) {
 		return true
 	} else if err != nil {
 		b.Log.Sugar().Error("检查用户是否为群成员出错", err)
